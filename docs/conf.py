@@ -188,7 +188,7 @@ ogp_custom_meta_tags = [
 def add_server_address(app):
     # This makes variable `server_address` available to docbot.js
     server_address = app.config['server_address']
-    js_text = "var server_address = '%s';" % server_address
+    js_text = f"var server_address = '{server_address}';"
     app.add_js_file(None, body=js_text)
 
 

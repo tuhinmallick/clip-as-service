@@ -170,7 +170,7 @@ def infer_tensorrt(
     :param output_binding_idxs: output tensor indexes
     :return: output tensor
     """
-    input_tensors: List[torch.Tensor] = list()
+    input_tensors: List[torch.Tensor] = []
     for tensor in host_inputs.values():
         assert isinstance(
             tensor, torch.Tensor

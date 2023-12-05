@@ -133,7 +133,7 @@ def test_docarray_traversal(make_flow, inputs):
     da = DocumentArray.empty(1)
     da[0].chunks = inputs
 
-    c = _Client(host=f'grpc://0.0.0.0', port=make_flow.port)
+    c = _Client(host='grpc://0.0.0.0', port=make_flow.port)
     r1 = c.post(on='/', inputs=da, parameters={'traversal_paths': '@c'})
     assert isinstance(r1, DocumentArray)
     assert r1[0].chunks.embeddings.shape[0] == len(inputs)
