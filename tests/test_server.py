@@ -19,7 +19,7 @@ def test_server_download(tmpdir):
     file_size = os.path.getsize(target_path)
     assert file_size > 0
 
-    part_path = target_path + '.part'
+    part_path = f'{target_path}.part'
     with open(target_path, 'rb') as source, open(part_path, 'wb') as part_out:
         buf = source.read(10)
         part_out.write(buf)

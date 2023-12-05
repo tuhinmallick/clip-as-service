@@ -54,71 +54,69 @@ class CLIPTensorRTModel(BaseCLIPModel):
     ):
         super().__init__(name)
 
-        if name in _MODELS:
-            cache_dir = os.path.expanduser(
-                f'~/.cache/clip/{name.replace("/", "-").replace("::", "-")}'
-            )
-
-            self._textual_path = os.path.join(
-                cache_dir,
-                f'textual.{ONNX_MODELS[name][0][1]}.trt',
-            )
-            self._visual_path = os.path.join(
-                cache_dir,
-                f'visual.{ONNX_MODELS[name][1][1]}.trt',
-            )
-
-            if not os.path.exists(self._textual_path) or not os.path.exists(
-                self._visual_path
-            ):
-                from clip_server.model.clip_onnx import CLIPOnnxModel
-
-                trt_logger: Logger = trt.Logger(trt.Logger.ERROR)
-                runtime: Runtime = trt.Runtime(trt_logger)
-                onnx_model = CLIPOnnxModel(name)
-
-                visual_engine = build_engine(
-                    runtime=runtime,
-                    onnx_file_path=onnx_model._visual_path,
-                    logger=trt_logger,
-                    min_shape=(1, 3, onnx_model.image_size, onnx_model.image_size),
-                    optimal_shape=(
-                        768,
-                        3,
-                        onnx_model.image_size,
-                        onnx_model.image_size,
-                    ),
-                    max_shape=(
-                        1024,
-                        3,
-                        onnx_model.image_size,
-                        onnx_model.image_size,
-                    ),
-                    workspace_size=10000 * 1024 * 1024,
-                    fp16=False,
-                    int8=False,
-                )
-                save_engine(visual_engine, self._visual_path)
-
-                text_engine = build_engine(
-                    runtime=runtime,
-                    onnx_file_path=onnx_model._textual_path,
-                    logger=trt_logger,
-                    min_shape=(1, 77),
-                    optimal_shape=(768, 77),
-                    max_shape=(1024, 77),
-                    workspace_size=10000 * 1024 * 1024,
-                    fp16=False,
-                    int8=False,
-                )
-                save_engine(text_engine, self._textual_path)
-        else:
+        if name not in _MODELS:
             raise RuntimeError(
                 'CLIP model {} not found or not supports Nvidia TensorRT backend; below is a list of all available models:\n{}'.format(
-                    name,
-                    ''.join(['\t- {}\n'.format(i) for i in list(_MODELS.keys())]),
+                    name, ''.join([f'\t- {i}\n' for i in list(_MODELS.keys())])
                 )
             )
+        cache_dir = os.path.expanduser(
+            f'~/.cache/clip/{name.replace("/", "-").replace("::", "-")}'
+        )
+
+        self._textual_path = os.path.join(
+            cache_dir,
+            f'textual.{ONNX_MODELS[name][0][1]}.trt',
+        )
+        self._visual_path = os.path.join(
+            cache_dir,
+            f'visual.{ONNX_MODELS[name][1][1]}.trt',
+        )
+
+        if not os.path.exists(self._textual_path) or not os.path.exists(
+            self._visual_path
+        ):
+            from clip_server.model.clip_onnx import CLIPOnnxModel
+
+            trt_logger: Logger = trt.Logger(trt.Logger.ERROR)
+            runtime: Runtime = trt.Runtime(trt_logger)
+            onnx_model = CLIPOnnxModel(name)
+
+            visual_engine = build_engine(
+                runtime=runtime,
+                onnx_file_path=onnx_model._visual_path,
+                logger=trt_logger,
+                min_shape=(1, 3, onnx_model.image_size, onnx_model.image_size),
+                optimal_shape=(
+                    768,
+                    3,
+                    onnx_model.image_size,
+                    onnx_model.image_size,
+                ),
+                max_shape=(
+                    1024,
+                    3,
+                    onnx_model.image_size,
+                    onnx_model.image_size,
+                ),
+                workspace_size=10000 * 1024 * 1024,
+                fp16=False,
+                int8=False,
+            )
+            save_engine(visual_engine, self._visual_path)
+
+            text_engine = build_engine(
+                runtime=runtime,
+                onnx_file_path=onnx_model._textual_path,
+                logger=trt_logger,
+                min_shape=(1, 77),
+                optimal_shape=(768, 77),
+                max_shape=(1024, 77),
+                workspace_size=10000 * 1024 * 1024,
+                fp16=False,
+                int8=False,
+            )
+            save_engine(text_engine, self._textual_path)
 
     @staticmethod
     def get_model_name(name: str):

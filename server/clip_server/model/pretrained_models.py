@@ -143,7 +143,7 @@ def get_model_url_md5(name: str):
     if len(model_pretrained) == 0:  # not on s3
         return None, None
     else:
-        return (_OPENCLIP_S3_BUCKET + '/' + model_pretrained[0], model_pretrained[1])
+        return f'{_OPENCLIP_S3_BUCKET}/{model_pretrained[0]}', model_pretrained[1]
 
 
 def download_model(
@@ -190,7 +190,7 @@ def download_model(
         task = progress.add_task('download', filename=filename, start=False)
 
         for _ in range(max_attempts):
-            tmp_file_path = download_target + '.part'
+            tmp_file_path = f'{download_target}.part'
             resume_byte_pos = (
                 os.path.getsize(tmp_file_path) if os.path.exists(tmp_file_path) else 0
             )

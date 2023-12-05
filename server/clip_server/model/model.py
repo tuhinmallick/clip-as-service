@@ -218,32 +218,30 @@ def _build_text_tower(
         text_cfg = CLIPTextCfg(**text_cfg)
 
     if text_cfg.hf_model_name:
-        text = HFTextEncoder(
+        return HFTextEncoder(
             text_cfg.hf_model_name,
             output_dim=embed_dim,
             proj=text_cfg.proj,
             pooler_type=text_cfg.pooler_type,
             pretrained=text_cfg.hf_model_pretrained,
         )
-    else:
-        act_layer = QuickGELU if quick_gelu else nn.GELU
-        norm_layer = (
-            LayerNormFp32 if dtype in (torch.float16, torch.bfloat16) else LayerNorm
-        )
+    act_layer = QuickGELU if quick_gelu else nn.GELU
+    norm_layer = (
+        LayerNormFp32 if dtype in (torch.float16, torch.bfloat16) else LayerNorm
+    )
 
-        text = TextTransformer(
-            context_length=text_cfg.context_length,
-            vocab_size=text_cfg.vocab_size,
-            width=text_cfg.width,
-            heads=text_cfg.heads,
-            layers=text_cfg.layers,
-            ls_init_value=text_cfg.ls_init_value,
-            output_dim=embed_dim,
-            act_layer=act_layer,
-            norm_layer=norm_layer,
-            dtype=dtype,
-        )
-    return text
+    return TextTransformer(
+        context_length=text_cfg.context_length,
+        vocab_size=text_cfg.vocab_size,
+        width=text_cfg.width,
+        heads=text_cfg.heads,
+        layers=text_cfg.layers,
+        ls_init_value=text_cfg.ls_init_value,
+        output_dim=embed_dim,
+        act_layer=act_layer,
+        norm_layer=norm_layer,
+        dtype=dtype,
+    )
 
 
 class CustomTextCLIP(_CustomTextCLIP):
@@ -352,8 +350,9 @@ def build_model_from_openai_state_dict(
         vision_layers = len(
             [
                 k
-                for k in state_dict.keys()
-                if k.startswith("visual.") and k.endswith(".attn.in_proj_weight")
+                for k in state_dict
+                if k.startswith("visual.")
+                and k.endswith(".attn.in_proj_weight")
             ]
         )
         vision_patch_size = state_dict["visual.conv1.weight"].shape[-1]
@@ -364,11 +363,11 @@ def build_model_from_openai_state_dict(
     else:
         counts: list = [
             len(
-                set(
+                {
                     k.split(".")[2]
                     for k in state_dict
                     if k.startswith(f"visual.layer{b}")
-                )
+                }
             )
             for b in [1, 2, 3, 4]
         ]
@@ -390,11 +389,11 @@ def build_model_from_openai_state_dict(
     transformer_width = state_dict["ln_final.weight"].shape[0]
     transformer_heads = transformer_width // 64
     transformer_layers = len(
-        set(
+        {
             k.split(".")[2]
             for k in state_dict
-            if k.startswith(f"transformer.resblocks")
-        )
+            if k.startswith("transformer.resblocks")
+        }
     )
 
     vision_cfg = CLIPVisionCfg(
@@ -598,13 +597,11 @@ def load_openclip_model(
                 False
             ), 'pretrained image towers currently only supported for timm models'
 
-    custom_text = (
+    if custom_text := (
         model_cfg.pop('custom_text', False)
         or force_custom_text
         or ('hf_model_name' in model_cfg['text_cfg'])
-    )
-
-    if custom_text:
+    ):
         model = CustomTextCLIP(**model_cfg, dtype=dtype)
     else:
         model = CLIP(**model_cfg, dtype=dtype)

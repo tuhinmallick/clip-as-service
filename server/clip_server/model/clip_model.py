@@ -45,7 +45,7 @@ class CLIPModel(BaseCLIPModel):
                         name,
                         ''.join(
                             [
-                                '\t- {}\n'.format(i)
+                                f'\t- {i}\n'
                                 for i in list(_OPENCLIP_MODELS.keys())
                                 + list(_MULTILINGUALCLIP_MODELS.keys())
                                 + list(_CNCLIP_MODELS.keys())

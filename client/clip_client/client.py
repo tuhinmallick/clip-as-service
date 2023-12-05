@@ -51,16 +51,15 @@ class Client:
                     'Credential is not supported for websocket, please use grpc or http'
                 )
 
-        if self._scheme in ('grpc', 'http', 'websocket'):
-            _kwargs = dict(host=r.hostname, port=_port, protocol=self._scheme, tls=_tls)
-
-            from jina import Client
-
-            self._client = Client(**_kwargs)
-            self._async_client = Client(**_kwargs, asyncio=True)
-        else:
+        if self._scheme not in ('grpc', 'http', 'websocket'):
             raise ValueError(f'{server} is not a valid scheme')
 
+        _kwargs = dict(host=r.hostname, port=_port, protocol=self._scheme, tls=_tls)
+
+        from jina import Client
+
+        self._client = Client(**_kwargs)
+        self._async_client = Client(**_kwargs, asyncio=True)
         self._authorization = credential.get(
             'Authorization', os.environ.get('CLIP_AUTH_TOKEN')
         )
@@ -466,7 +465,7 @@ class Client:
         :return: the ranked Documents in a DocumentArray.
         """
         if isinstance(docs, str):
-            raise TypeError(f'Content must be an Iterable of [Document]')
+            raise TypeError('Content must be an Iterable of [Document]')
 
         self._prepare_streaming(
             not kwargs.get('show_progress'),
@@ -504,7 +503,7 @@ class Client:
         self, docs: Union['DocumentArray', Iterable['Document']], **kwargs
     ) -> 'DocumentArray':
         if isinstance(docs, str):
-            raise TypeError(f'Content must be an Iterable of [Document]')
+            raise TypeError('Content must be an Iterable of [Document]')
 
         self._prepare_streaming(
             not kwargs.get('show_progress'),

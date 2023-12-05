@@ -91,13 +91,12 @@ class Tokenizer:
 
             for i, tokens in enumerate(all_tokens):
                 if len(tokens) > context_length:
-                    if truncate:
-                        tokens = tokens[:context_length]
-                        tokens[-1] = eot_token
-                    else:
+                    if not truncate:
                         raise RuntimeError(
                             f'Input {texts[i]} is too long for context length {context_length}'
                         )
+                    tokens = tokens[:context_length]
+                    tokens[-1] = eot_token
                 input_ids[i, : len(tokens)] = torch.tensor(tokens)
                 attention_mask[i, : len(tokens)] = 1
 

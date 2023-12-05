@@ -23,8 +23,7 @@ class Exec2(Executor):
 
     @requests
     async def process(self, docs, **kwargs):
-        results = await self._client.aencode(docs, batch_size=2)
-        return results
+        return await self._client.aencode(docs, batch_size=2)
 
 
 class ErrorExec(Executor):
@@ -41,7 +40,7 @@ def test_client_concurrent_requests(port_generator):
         uses=Exec2, uses_with={'server_host': f'grpc://0.0.0.0:{f1.port}'}
     )
 
-    with f1, f2:
+    with (f1, f2):
         import jina
         from multiprocessing.pool import ThreadPool
 
@@ -60,7 +59,7 @@ def test_client_concurrent_requests(port_generator):
             results = p.map(run_post, [generate_docs(f't{k}') for k in range(5)])
 
         for r in results:
-            assert len(set([d.id[:2] for d in r])) == 1
+            assert len({d.id[:2] for d in r}) == 1
 
 
 def test_client_large_input(make_torch_flow):
@@ -88,13 +87,14 @@ def test_empty_input(make_torch_flow, inputs, endpoint):
     c = Client(server=f'grpc://0.0.0.0:{make_torch_flow.port}')
 
     r = getattr(c, endpoint)(inputs if not callable(inputs) else inputs())
-    if endpoint == 'encode':
-        if isinstance(inputs, DocumentArray):
-            assert isinstance(r, DocumentArray)
-        else:
-            assert isinstance(r, list)
-    else:
+    if (
+        endpoint == 'encode'
+        and isinstance(inputs, DocumentArray)
+        or endpoint != 'encode'
+    ):
         assert isinstance(r, DocumentArray)
+    else:
+        assert isinstance(r, list)
     assert len(r) == 0
 
 
@@ -113,13 +113,14 @@ async def test_async_empty_input(make_torch_flow, inputs, endpoint):
     c = Client(server=f'grpc://0.0.0.0:{make_torch_flow.port}')
 
     r = await getattr(c, endpoint)(inputs if not callable(inputs) else inputs())
-    if endpoint == 'aencode':
-        if isinstance(inputs, DocumentArray):
-            assert isinstance(r, DocumentArray)
-        else:
-            assert isinstance(r, list)
-    else:
+    if (
+        endpoint == 'aencode'
+        and isinstance(inputs, DocumentArray)
+        or endpoint != 'aencode'
+    ):
         assert isinstance(r, DocumentArray)
+    else:
+        assert isinstance(r, list)
     assert len(r) == 0
 
 

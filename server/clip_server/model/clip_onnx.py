@@ -206,46 +206,43 @@ class CLIPOnnxModel(BaseCLIPModel):
     ):
         super().__init__(name)
         self._dtype = dtype
-        if name in _MODELS:
-            if not model_path:
-                cache_dir = os.path.expanduser(
-                    f'~/.cache/clip/{name.replace("/", "-").replace("::", "-")}'
-                )
-                textual_model_name, textual_model_md5 = _MODELS[name][0]
-                self._textual_path = download_model(
-                    url=_S3_BUCKET_V2 + textual_model_name,
-                    target_folder=cache_dir,
-                    md5sum=textual_model_md5,
-                    with_resume=True,
-                )
-                visual_model_name, visual_model_md5 = _MODELS[name][1]
-                self._visual_path = download_model(
-                    url=_S3_BUCKET_V2 + visual_model_name,
-                    target_folder=cache_dir,
-                    md5sum=visual_model_md5,
-                    with_resume=True,
-                )
-            else:
-                if os.path.isdir(model_path):
-                    self._textual_path = os.path.join(model_path, 'textual.onnx')
-                    self._visual_path = os.path.join(model_path, 'visual.onnx')
-                    if not os.path.isfile(self._textual_path) or not os.path.isfile(
-                        self._visual_path
-                    ):
-                        raise RuntimeError(
-                            f'The given model path {model_path} does not contain `textual.onnx` and `visual.onnx`'
-                        )
-                else:
-                    raise RuntimeError(
-                        f'The given model path {model_path} should be a folder containing both '
-                        f'`textual.onnx` and `visual.onnx`.'
-                    )
-        else:
+        if name not in _MODELS:
             raise RuntimeError(
                 'CLIP model {} not found or not supports ONNX backend; below is a list of all available models:\n{}'.format(
-                    name,
-                    ''.join(['\t- {}\n'.format(i) for i in list(_MODELS.keys())]),
+                    name, ''.join([f'\t- {i}\n' for i in list(_MODELS.keys())])
                 )
+            )
+        if not model_path:
+            cache_dir = os.path.expanduser(
+                f'~/.cache/clip/{name.replace("/", "-").replace("::", "-")}'
+            )
+            textual_model_name, textual_model_md5 = _MODELS[name][0]
+            self._textual_path = download_model(
+                url=_S3_BUCKET_V2 + textual_model_name,
+                target_folder=cache_dir,
+                md5sum=textual_model_md5,
+                with_resume=True,
+            )
+            visual_model_name, visual_model_md5 = _MODELS[name][1]
+            self._visual_path = download_model(
+                url=_S3_BUCKET_V2 + visual_model_name,
+                target_folder=cache_dir,
+                md5sum=visual_model_md5,
+                with_resume=True,
+            )
+        elif os.path.isdir(model_path):
+            self._textual_path = os.path.join(model_path, 'textual.onnx')
+            self._visual_path = os.path.join(model_path, 'visual.onnx')
+            if not os.path.isfile(self._textual_path) or not os.path.isfile(
+                self._visual_path
+            ):
+                raise RuntimeError(
+                    f'The given model path {model_path} does not contain `textual.onnx` and `visual.onnx`'
+                )
+        else:
+            raise RuntimeError(
+                f'The given model path {model_path} should be a folder containing both '
+                f'`textual.onnx` and `visual.onnx`.'
             )
 
     @staticmethod
@@ -273,7 +270,7 @@ class CLIPOnnxModel(BaseCLIPModel):
                 import tempfile
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
-                    tmp_model_path = tmp_dir + f'/{model_type}.onnx'
+                    tmp_model_path = f'{tmp_dir}/{model_type}.onnx'
                     if model_path.endswith('.zip'):
                         import zipfile
 

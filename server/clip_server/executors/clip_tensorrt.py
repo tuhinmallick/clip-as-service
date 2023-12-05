@@ -45,9 +45,7 @@ class CLIPEncoder(Executor):
         self._minibatch_size = minibatch_size
         self._access_paths = access_paths
         if 'traversal_paths' in kwargs:
-            warnings.warn(
-                f'`traversal_paths` is deprecated. Use `access_paths` instead.'
-            )
+            warnings.warn('`traversal_paths` is deprecated. Use `access_paths` instead.')
             self._access_paths = kwargs['traversal_paths']
 
         self._device = device
@@ -116,15 +114,13 @@ class CLIPEncoder(Executor):
         **kwargs,
     ):
         with self.tracer.start_as_current_span(
-            'encode', context=tracing_context
-        ) as span:
+                'encode', context=tracing_context
+            ) as span:
             span.set_attribute('device', self._device)
             span.set_attribute('runtime', 'tensorrt')
             access_paths = parameters.get('access_paths', self._access_paths)
             if 'traversal_paths' in parameters:
-                warnings.warn(
-                    f'`traversal_paths` is deprecated. Use `access_paths` instead.'
-                )
+                warnings.warn('`traversal_paths` is deprecated. Use `access_paths` instead.')
                 access_paths = parameters['traversal_paths']
             _drop_image_content = parameters.get('drop_image_content', False)
 
@@ -136,8 +132,8 @@ class CLIPEncoder(Executor):
             with self.tracer.start_as_current_span('inference') as inference_span:
                 inference_span.set_attribute('drop_image_content', _drop_image_content)
                 inference_span.set_attribute('minibatch_size', self._minibatch_size)
-                inference_span.set_attribute('has_img_da', True if _img_da else False)
-                inference_span.set_attribute('has_txt_da', True if _txt_da else False)
+                inference_span.set_attribute('has_img_da', bool(_img_da))
+                inference_span.set_attribute('has_txt_da', bool(_txt_da))
                 # for image
                 if _img_da:
                     with self.tracer.start_as_current_span(

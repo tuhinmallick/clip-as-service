@@ -11,10 +11,7 @@ if __name__ == '__main__':
     from jina import Flow
 
     if len(sys.argv) > 1:
-        if sys.argv[1] == '-i':
-            _input = sys.stdin.read()
-        else:
-            _input = sys.argv[1]
+        _input = sys.stdin.read() if sys.argv[1] == '-i' else sys.argv[1]
     else:
         _input = 'torch-flow.yml'
 
